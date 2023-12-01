@@ -30,9 +30,11 @@ def air_density(height):
 def func(height, velocity, S):
   return S * air_density(height) * velocity**2 / 2
 
-
+class StopIntegration(Exception):
+    pass
+b = True
 # Система уравнений
-def aircraft_model(y, t, S, l, P_max, g, e, H_T, m0, ma, c, c_x0, c_y0, c_ya):
+def aircraft_model(t, y, S, l, P_max, g, e, H_T, m0, ma, c, c_x0, c_y0, c_ya):
   m, v, h, theta, x = y
   u = np.radians(10)
   a = u - theta
@@ -45,10 +47,16 @@ def aircraft_model(y, t, S, l, P_max, g, e, H_T, m0, ma, c, c_x0, c_y0, c_ya):
     dt_dt = 57.3 * ((((P_max * a) / 57.3) + (c_y0 + c_ya * a) * func(h, v, S)) / (m * v) - g * np.cos(theta) / v)
     if (dt_dt > 0) & (m <= (m0+ma)):
       dt_dt = 0
+  global b
+  if (x > 1000) & b:
+    b = False
+    dm_dt = -c-2.0
+  else:
+    dm_dt = -c
   dh_dt = v * np.sin(theta)
   dv_dt = (P_max - (c_x0 + (c_ya * a)**2 * S / (np.pi * e * l**2)) * func(h, v, S)) / m - g * np.sin(theta)
   dx_dt = v * np.cos(theta)
-  dm_dt = -c
+  #dm_dt = -c
 
   return [dm_dt, dv_dt, dh_dt, dt_dt, dx_dt]
 
@@ -56,13 +64,13 @@ def aircraft_model(y, t, S, l, P_max, g, e, H_T, m0, ma, c, c_x0, c_y0, c_ya):
 flight_time = 10.0 / 10 * 15 * 60
 
 # Временные точки для решения уравнения
-time_points = np.linspace(0, flight_time, 100)
+time_points = np.linspace(0, flight_time, 200)
 
 P_max = 30      # максимальное значение тяги двигателя в Ньютонах
 V_t0  = 15      # начальная скорость в метрах в секунду
 V_T   = 50      # конечная  скорость в метрах в секунду
 H_t0  = 10      # текущая   высота   в метрах
-H_T   = 500    # конечная  высота   в метрах
+H_T   = 500     # конечная  высота   в метрах
 
 S     = 0.55    # площадь крыла в метрах^2
 l     = 2.8956  # размах  крыла в метрах
@@ -72,7 +80,7 @@ ma    = 2.0     # масса груза в килограммах
 e     = 0.75    # коэффициент Освальда
 g     = 9.80665 # ускорение свободного падения
 
-c     = 0.0045   # Скорость расхода топлива килограммах в секунду
+c     = 0.0045  # Скорость расхода топлива килограммах в секунду
 
 c_x0  = 0.0434  # коэффициент минимального лобового сопротивления
 c_y0  = 0.23    # коэффициент подъемной силы при нулевом уголе тангажа
@@ -80,35 +88,48 @@ c_ya  = 5.6106  # коэффициент производной первого �
 
 # Начальные значения массы топлива, скорости, высоты, тангажа и расстояния
 initial_conditions = [m+ma, V_t0, H_t0, 0.0, 0.0]
-
+#xm = 10000
 # Решение системы уравнений
-solution = odeint(aircraft_model, initial_conditions, time_points, args=(S, l, P_max, g, e, H_T, m0, ma, c, c_x0, c_y0, c_ya), hmax=0.1)
+#solution = odeint(aircraft_model, initial_conditions, time_points, args=(S, l, P_max, g, e, H_T, m0, ma, c, xm, c_x0, c_y0, c_ya), hmax=0.01, atol=1e-8, rtol=1e-8, method='RK45')
+from scipy.integrate import solve_ivp
 
+solution = solve_ivp(
+    lambda t, y: aircraft_model(t, y, S, l, P_max, g, e, H_T, m0, ma, c, c_x0, c_y0, c_ya),
+    y0=initial_conditions,
+    t_eval=time_points,
+    t_span=(time_points[0], time_points[-1]),
+    method='RK45',
+    atol=1e-8,
+    rtol=1e-8,
+    dense_output=True
+)
 # Извлечение решений
-fuel_mass, velocity, altitude, pitch, distance  = solution[:, 0], solution[:, 1], solution[:, 2], solution[:, 3], solution[:, 4]
+fuel_mass, velocity, altitude, pitch, distance  = solution.y[0], solution.y[1], solution.y[2], solution.y[3], solution.y[4]
+
+print(distance[:50])
 
 # Построение графиков
 plt.figure(figsize=(12, 6))
 plt.subplot(221)
-plt.plot(time_points, fuel_mass)
+plt.plot(solution.t, fuel_mass)
 plt.title('Общая масса беспилотника')
 plt.xlabel('Время (с)')
 plt.ylabel('Общая масса беспилотника (кг)')
 
 plt.subplot(222)
-plt.plot(time_points, velocity)
+plt.plot(solution.t, velocity)
 plt.title('Скорость')
 plt.xlabel('Время (с)')
 plt.ylabel('Скорость (м/с)')
 
 plt.subplot(223)
-plt.plot(time_points, altitude)
+plt.plot(solution.t, altitude)
 plt.title('Высота')
 plt.xlabel('Время (с)')
 plt.ylabel('Высота (м)')
 
 plt.subplot(224)
-plt.plot(time_points, pitch)
+plt.plot(solution.t, pitch)
 plt.title('Тангаж')
 plt.xlabel('Время (с)')
 plt.ylabel('Тангаж (рад)')
@@ -116,7 +137,7 @@ plt.tight_layout()
 plt.show()
 
 plt.subplot(224)
-plt.plot(time_points, distance)
+plt.plot(solution.t, distance)
 plt.title('Расстояние')
 plt.xlabel('Время (с)')
 plt.ylabel('Расстояние (м)')
