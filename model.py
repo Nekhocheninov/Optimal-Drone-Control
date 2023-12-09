@@ -40,7 +40,6 @@ def aircraft_model(t, y, S, l, P_max, H_T, m0, ma, c):
         dt_dt = 57.3 * ((((P_max * a) / 57.3) + (c_y0 + c_ya * a) * func(h, v, S)) / (m * v) - g * np.cos(theta) / v)
         if (dt_dt > 0) & (m <= (m0+ma)):
             dt_dt = 0
-
     dm_dt = -c
     dh_dt = v * np.sin(theta)
     dv_dt = (P_max - (c_x0 + (c_ya * a)**2 * S / (np.pi * e * l**2)) * func(h, v, S)) / m - g * np.sin(theta)
