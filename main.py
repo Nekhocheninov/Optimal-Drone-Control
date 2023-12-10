@@ -1,7 +1,7 @@
 import sys
-from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QSlider, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QGridLayout, QFrame
+from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QSlider, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QGridLayout
 from PySide6.QtGui import QIntValidator, QAction
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QEvent
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import model
@@ -11,19 +11,35 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Оптимальное управление беспилотным летательным аппаратом для доставки грузов")
         central_widget = QWidget(self)
+        self.status_label = QLabel(self)
+        self.statusBar().addWidget(self.status_label, 1)
         self.setCentralWidget(central_widget)
         self.setup_ui(central_widget)
 
     def setup_ui(self, central_widget):
         grid_layout = QGridLayout(central_widget)
         sliders_layout = QVBoxLayout()
-        Labels_1 = ['Площадь крыла в метрах^2', 'Размах крыла в метрах', 'Масса самолета при пустых баках в килограммах',
-                    'Масса самолета при полных баках в килограммах', 'Максимальное значение тяги двигателя в Ньютонах',
-                    'Скорость расхода топлива килограммах в секунду', 'Начальная скорость в метрах в секунду',
+        Labels_1 = ['Площадь крыла в метрах^2', 'Размах крыла в метрах', 'Масса дрона при пустых баках в килограммах',
+                    'Масса дрона при полных баках в килограммах', 'Максимальное значение тяги двигателя в Ньютонах',
+                    'Скорость расхода топлива килограммах в секунду', 'Текущая скорость в метрах в секунду',
                     'Текущая высота в метрах', 'Конечная высота в метрах', 'Масса груза в килограммах',
                     'Продолжительность полета в секундах', 'Момент времени сброса груза', 'Конечная высота после сброса груза в метрах']
         Labels_2 = ['S', 'l', 'm_0', 'm_max', 'P_max', 'c', 'V_0', 'H_0', 'H_max', 'm_a', 't', 't_a', 'H_max_a']
         Variables = ['0.55', '2.8956', '6.5', '11.5', '30', '0.0045', '15', '10', '500', '2.0', '1800', '900', '1000']
+
+        toolTips = ['Площадь крыла влияет на подъемную силу и маневренность. Большая площадь обеспечивает высокую грузоподъемность, маленькая - повышает маневренность, но уменьшает грузоподъемность и продолжительность полета.',
+                    'Размах крыла влияет на подъемную силу и маневренность. Больший размах способствует грузоподъемности, меньший — повышает маневренность и скорость.',
+                    'Масса дрона при пустых баках',
+                    'Масса дрона при полных баках',
+                    'Тяга двигателя влияет на способность дрона нести грузы и подниматься в воздухе. Более высокая максимальная тяга обычно позволяет дрону подниматься на большие высоты и носить тяжелые грузы.',
+                    'Скорость, с которой двигатель дрона расходует топливо',
+                    'Скорость, которую дрон имеет изначально',
+                    'Высота, на которой дрон находится изначально',
+                    'Высота, которую дрон не будет превышать',
+                    'Масса груза для доставки дроном',
+                    'Общая продолжительность полета дрона для расчета',
+                    'Момент времени, когда дрон должен сбросить груз',
+                    'Новое значение высоты, которую дрон не будет превышать']
 
         for i in range(13):
             label_1 = QLabel(Labels_1[i] + ':', central_widget)
@@ -65,6 +81,12 @@ class MainWindow(QMainWindow):
 
             initial_value = Variables[i]
             edit.setText(str(initial_value))
+
+            edit.setToolTip(f"Подсказка: {toolTips[i]}")
+            slider.setToolTip(f"Подсказка: {toolTips[i]}")
+
+            edit.installEventFilter(self)
+            slider.installEventFilter(self)
 
             row_layout = QVBoxLayout()
             row_layout.addWidget(label_1)
@@ -114,18 +136,13 @@ class MainWindow(QMainWindow):
 
         # Создание пунктов меню
         file_menu = menubar.addMenu('Программа')
-        description_menu = menubar.addMenu('Описание')
         examples_menu = menubar.addMenu('Примеры')
         exercises_menu = menubar.addMenu('Упражнения')
         language_menu = menubar.addMenu('Язык')
 
         # Добавление действий в меню
         file_menu.addAction('Открыть')
-        file_menu.addAction('Сохранить')
         file_menu.addAction('Выход')
-
-        description_menu.addAction('Общее описание')
-        description_menu.addAction('Техническое описание')
 
         examples_menu.addAction('Пример 1')
         examples_menu.addAction('Пример 2')
@@ -138,6 +155,17 @@ class MainWindow(QMainWindow):
 
         # Создание обработчика события для выхода из программы
         file_menu.triggered[QAction].connect(self.menu_triggered)
+
+    def eventFilter(self, source, event):
+        if event.type() == QEvent.Enter:
+            if isinstance(source, QLineEdit) or isinstance(source, QSlider):
+                self.update_status_bar(f"{source.toolTip()}")
+        elif event.type() == QEvent.Leave:
+            self.update_status_bar("")  # Clear the tooltip when the mouse leaves
+        return super().eventFilter(source, event)
+
+    def update_status_bar(self, text):
+        self.status_label.setText(text)
 
     def menu_triggered(self, action):
         if action.text() == 'Выход':
