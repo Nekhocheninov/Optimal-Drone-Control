@@ -10,6 +10,34 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Оптимальное управление беспилотным летательным аппаратом для доставки грузов")
+        self.menu_labels = {
+            'Выход': 'Exit',
+            'Открыть': 'Open',
+            'Пример 1': 'Example 1',
+            'Пример 2': 'Example 2',
+            'Упражнение 1': 'Exercise 1',
+            'Упражнение 2': 'Exercise 2',
+            'Русский': 'Russian',
+            'Английский': 'English',
+            'Программа' : 'Program',
+            'Примеры' : 'Examples',
+            'Упражнения' : 'Exercises',
+            'Язык' : 'Language',
+            'Exit': 'Выход',
+            'Open': 'Открыть',
+            'Example 1': 'Пример 1',
+            'Example 2': 'Пример 2',
+            'Exercise 1': 'Упражнение 1',
+            'Exercise 2': 'Упражнение 2',
+            'Russian': 'Русский',
+            'English': 'Английский',
+            'Program' : 'Программа',
+            'Examples' : 'Примеры',
+            'Exercises' : 'Упражнения',
+            'Language' : 'Язык'
+        }
+        self.current_language = 'ru'
+
         central_widget = QWidget(self)
         self.status_label = QLabel(self)
         self.statusBar().addWidget(self.status_label, 1)
@@ -19,11 +47,39 @@ class MainWindow(QMainWindow):
     def setup_ui(self, central_widget):
         grid_layout = QGridLayout(central_widget)
         sliders_layout = QVBoxLayout()
-        Labels_1 = ['Площадь крыла в метрах^2', 'Размах крыла в метрах', 'Масса дрона при пустых баках в килограммах',
-                    'Масса дрона при полных баках в килограммах', 'Максимальное значение тяги двигателя в Ньютонах',
-                    'Скорость расхода топлива килограммах в секунду', 'Текущая скорость в метрах в секунду',
-                    'Текущая высота в метрах', 'Конечная высота в метрах', 'Масса груза в килограммах',
-                    'Продолжительность полета в секундах', 'Момент времени сброса груза', 'Конечная высота после сброса груза в метрах']
+
+        menubar = self.menuBar()
+        file_menu = menubar.addMenu('Программа')
+        examples_menu = menubar.addMenu('Примеры')
+        exercises_menu = menubar.addMenu('Упражнения')
+        language_menu = menubar.addMenu('Язык')
+        file_menu.addAction('Открыть')
+        file_menu.addAction('Выход')
+        examples_menu.addAction('Пример 1')
+        examples_menu.addAction('Пример 2')
+        exercises_menu.addAction('Упражнение 1')
+        exercises_menu.addAction('Упражнение 2')
+        language_menu.addAction('Русский')
+        language_menu.addAction('Английский')
+
+        file_menu.triggered[QAction].connect(self.menu_triggered)
+        examples_menu.triggered[QAction].connect(self.menu_triggered)
+        exercises_menu.triggered[QAction].connect(self.menu_triggered)
+        language_menu.triggered[QAction].connect(self.menu_triggered)
+
+        if self.current_language == 'ru':
+            Labels_1 = ['Площадь крыла в метрах^2', 'Размах крыла в метрах', 'Масса дрона при пустых баках в килограммах',
+                        'Масса дрона при полных баках в килограммах', 'Максимальное значение тяги двигателя в Ньютонах',
+                        'Скорость расхода топлива килограммах в секунду', 'Текущая скорость в метрах в секунду',
+                        'Текущая высота в метрах', 'Конечная высота в метрах', 'Масса груза в килограммах',
+                        'Продолжительность полета в секундах', 'Момент времени сброса груза', 'Конечная высота после сброса груза в метрах']
+        else:
+            Labels_1 = ['Wing Area in Square Meters', 'Wingspan in Meters', 'Drone Mass with Empty Tanks in Kilograms',
+                        'Drone Mass with Full Tanks in Kilograms', 'Maximum Engine Thrust in Newtons',
+                        'Fuel Consumption Rate in Kilograms per Second', 'Current Speed in Meters per Second',
+                        'Current Altitude in Meters', 'Final Altitude in Meters', 'Cargo Mass in Kilograms',
+                        'Flight Duration in Seconds', 'Time of Cargo Release', 'Final Altitude after Cargo Release in Meters']
+
         Labels_2 = ['S', 'l', 'm_0', 'm_max', 'P_max', 'c', 'V_0', 'H_0', 'H_max', 'm_a', 't', 't_a', 'H_max_a']
         Variables = ['0.55', '2.8956', '6.5', '11.5', '30', '0.0045', '15', '10', '500', '2.0', '1800', '900', '1000']
 
@@ -43,6 +99,7 @@ class MainWindow(QMainWindow):
 
         for i in range(13):
             label_1 = QLabel(Labels_1[i] + ':', central_widget)
+            label_1.setObjectName(f'label_1_{i + 1}')
             label_2 = QLabel(Labels_2[i] + ' =', central_widget)
             label_2.setFixedWidth(50)
             edit = QLineEdit(central_widget)
@@ -50,6 +107,7 @@ class MainWindow(QMainWindow):
             int_validator = QIntValidator()
             edit.setValidator(int_validator)
             slider = QSlider(Qt.Horizontal, central_widget)
+            slider.setObjectName(f'horizontalSlider_{i + 1}')
             edit.setObjectName(f'horizontalEdit_{i + 1}')
             slider.setFocusPolicy(Qt.NoFocus)
             slider.setMinimum(0)
@@ -82,8 +140,8 @@ class MainWindow(QMainWindow):
             initial_value = Variables[i]
             edit.setText(str(initial_value))
 
-            edit.setToolTip(f"Подсказка: {toolTips[i]}")
-            slider.setToolTip(f"Подсказка: {toolTips[i]}")
+            edit.setToolTip(f"{toolTips[i]}")
+            slider.setToolTip(f"{toolTips[i]}")
 
             edit.installEventFilter(self)
             slider.installEventFilter(self)
@@ -99,7 +157,7 @@ class MainWindow(QMainWindow):
             sliders_layout.addLayout(row_layout)
 
         self.figures, self.axes = plt.subplots(3, 2, figsize=(16, 6), sharex=True)
-        self.figures.suptitle("Изменение параметров системы", fontsize=14)
+        self.figures.suptitle("Changing system parameters", fontsize=14)
         self.figures.patch.set_edgecolor('gray')
         self.figures.patch.set_linewidth(2)
         self.figures.delaxes(self.axes[2, 1])
@@ -110,6 +168,7 @@ class MainWindow(QMainWindow):
         self.update_plot()
 
         label = QLabel("Параметы системы:", central_widget)
+        label.setObjectName(f'label')
         label.setAlignment(Qt.AlignCenter)
         label.setStyleSheet("border: 0px solid black;")
         
@@ -122,6 +181,7 @@ class MainWindow(QMainWindow):
         grid_layout.addWidget(sliders_container, 0, 1, 1, 1)
 
         update_button = QPushButton("Применить параметры", central_widget)
+        update_button.setObjectName(f'update_button')
         update_button.clicked.connect(self.update_plot)
         grid_layout.addWidget(update_button, 1, 1, 1, 1)
 
@@ -132,46 +192,108 @@ class MainWindow(QMainWindow):
         central_widget.setLayout(grid_layout)
         self.setCentralWidget(central_widget)
 
-        menubar = self.menuBar()
-
-        # Создание пунктов меню
-        file_menu = menubar.addMenu('Программа')
-        examples_menu = menubar.addMenu('Примеры')
-        exercises_menu = menubar.addMenu('Упражнения')
-        language_menu = menubar.addMenu('Язык')
-
-        # Добавление действий в меню
-        file_menu.addAction('Открыть')
-        file_menu.addAction('Выход')
-
-        examples_menu.addAction('Пример 1')
-        examples_menu.addAction('Пример 2')
-
-        exercises_menu.addAction('Упражнение 1')
-        exercises_menu.addAction('Упражнение 2')
-
-        language_menu.addAction('Русский')
-        language_menu.addAction('Английский')
-
-        # Создание обработчика события для выхода из программы
-        file_menu.triggered[QAction].connect(self.menu_triggered)
-
     def eventFilter(self, source, event):
         if event.type() == QEvent.Enter:
             if isinstance(source, QLineEdit) or isinstance(source, QSlider):
                 self.update_status_bar(f"{source.toolTip()}")
         elif event.type() == QEvent.Leave:
-            self.update_status_bar("")  # Clear the tooltip when the mouse leaves
+            self.update_status_bar("")
         return super().eventFilter(source, event)
 
     def update_status_bar(self, text):
         self.status_label.setText(text)
 
     def menu_triggered(self, action):
-        if action.text() == 'Выход':
+        if (action.text() == 'Выход') | (action.text() == 'Exit'):
             QApplication.quit()
-        elif action.text() == 'Общее описание':
+        elif (action.text() == 'Открыть') | (action.text() == 'Open'):
             pass
+        elif (action.text() == 'Пример 1') | (action.text() == 'Example 1'):
+            pass
+        elif (action.text() == 'Пример 2') | (action.text() == 'Example 2'):
+            pass
+        elif (action.text() == 'Упражнение 1') | (action.text() == 'Exercise 1'):
+            pass
+        elif (action.text() == 'Упражнение 2') | (action.text() == 'Exercise 2'):
+            pass
+        elif (action.text() == 'Русский') | (action.text() == 'Russian'):
+            if self.current_language != 'ru':
+                self.setWindowTitle("Оптимальное управление беспилотным летательным аппаратом для доставки грузов")
+                self.current_language = 'ru'
+                self.changeMenu()
+                self.changeLabelsLanguage()
+            
+        elif (action.text() == 'Английский') | (action.text() == 'English'):
+            if self.current_language != 'en':
+                self.setWindowTitle("Optimal control of an unmanned aerial vehicle for cargo delivery")
+                self.current_language = 'en'
+                self.changeMenu()
+                self.changeLabelsLanguage()
+    
+    def changeMenu(self):
+        for menu in self.menuBar().actions():
+            for action in menu.menu().actions():
+                action_name = action.text()
+                new_text = self.menu_labels.get(action_name, action_name)
+                action.setText(new_text)
+            menu_name = menu.text()
+            new_text = self.menu_labels.get(menu_name, menu_name)
+            menu.setText(new_text)
+    
+    def changeLabelsLanguage(self):
+        if self.current_language == 'ru':
+            Labels_1 = ['Площадь крыла в метрах^2', 'Размах крыла в метрах', 'Масса дрона при пустых баках в килограммах',
+                        'Масса дрона при полных баках в килограммах', 'Максимальное значение тяги двигателя в Ньютонах',
+                        'Скорость расхода топлива килограммах в секунду', 'Текущая скорость в метрах в секунду',
+                        'Текущая высота в метрах', 'Конечная высота в метрах', 'Масса груза в килограммах',
+                        'Продолжительность полета в секундах', 'Момент времени сброса груза', 'Конечная высота после сброса груза в метрах']
+            toolTips = ['Площадь крыла влияет на подъемную силу и маневренность. Большая площадь обеспечивает высокую грузоподъемность, маленькая - повышает маневренность, но уменьшает грузоподъемность и продолжительность полета.',
+                        'Размах крыла влияет на подъемную силу и маневренность. Больший размах способствует грузоподъемности, меньший — повышает маневренность и скорость.',
+                        'Масса дрона при пустых баках',
+                        'Масса дрона при полных баках',
+                        'Тяга двигателя влияет на способность дрона нести грузы и подниматься в воздухе. Более высокая максимальная тяга обычно позволяет дрону подниматься на большие высоты и носить тяжелые грузы.',
+                        'Скорость, с которой двигатель дрона расходует топливо',
+                        'Скорость, которую дрон имеет изначально',
+                        'Высота, на которой дрон находится изначально',
+                        'Высота, которую дрон не будет превышать',
+                        'Масса груза для доставки дроном',
+                        'Общая продолжительность полета дрона для расчета',
+                        'Момент времени, когда дрон должен сбросить груз',
+                        'Новое значение высоты, которую дрон не будет превышать']
+            update_lang = ['Параметы системы:', 'Применить параметры']
+        else:
+            Labels_1 = ['Wing Area in Square Meters', 'Wingspan in Meters', 'Drone Mass with Empty Tanks in Kilograms',
+                        'Drone Mass with Full Tanks in Kilograms', 'Maximum Engine Thrust in Newtons',
+                        'Fuel Consumption Rate in Kilograms per Second', 'Current Speed in Meters per Second',
+                        'Current Altitude in Meters', 'Final Altitude in Meters', 'Cargo Mass in Kilograms',
+                        'Flight Duration in Seconds', 'Time of Cargo Release', 'Final Altitude after Cargo Release in Meters']
+            toolTips = ['Wing area affects lift and maneuverability. A larger area provides high payload capacity, while a smaller one increases maneuverability but reduces payload capacity and flight duration.',
+                        'Wingspan affects lift and maneuverability. Greater wingspan contributes to payload capacity, while a smaller one enhances maneuverability and speed.',
+                        'Drone mass with empty tanks',
+                        'Drone mass with full tanks',
+                        'Engine thrust affects the drones ability to carry loads and ascend. A higher maximum thrust usually allows the drone to climb to greater heights and carry heavier loads.',
+                        'The speed at which the drones engine consumes fuel',
+                        'The speed at which the drone initially travels',
+                        'The height at which the drone is initially located',
+                        'The height that the drone will not exceed',
+                        'Cargo mass for drone delivery',
+                        'Total drone flight duration for calculation',
+                        'The time when the drone should release the cargo',
+                        'The new value of the height that the drone will not exceed']
+            update_lang = ['System parameters:', 'Apply parameters']
+
+        for i in range(13):
+            label_1 = self.findChild(QLabel, f'label_1_{i + 1}')
+            label_1.setText(Labels_1[i] + ':')
+            slider = self.findChild(QSlider, f'horizontalSlider_{i + 1}')
+            edit = self.findChild(QLineEdit, f'horizontalEdit_{i + 1}')
+            edit.setToolTip(f"{toolTips[i]}")
+            slider.setToolTip(f"{toolTips[i]}")
+        
+        label = self.findChild(QLabel, f'label')
+        update_button = self.findChild(QPushButton, f'update_button')
+        label.setText(update_lang[0])
+        update_button.setText(update_lang[1])
 
     def update_plot(self):
         Edit_values = [float(self.findChild(QLineEdit, f'horizontalEdit_{i + 1}').text()) for i in range(13)]
@@ -183,7 +305,7 @@ class MainWindow(QMainWindow):
 
         yvalues = [solution_1['pitch'], solution_1['velocity'], solution_1['altitude'], solution_1['fuel_mass'],
                    solution_1['distance']]
-        ylabels = ['Тангаж (рад)', 'Скорость (м/с)', 'Высота (м)', 'Общая масса (кг)', 'Расстояние (м)']
+        ylabels = ['Pitch (rad)', 'Speed (m/s)', 'Altitude (m)', 'Total Mass (kg)', 'Distance (m)']
 
         for i in range(2):
             for j in range(2):
@@ -191,14 +313,15 @@ class MainWindow(QMainWindow):
                 ax.clear()
                 idx = i * 2 + j
                 ax.plot(solution_1['solution'].t, yvalues[idx])
-                ax.set_xlabel('Время (с)')
+                ax.set_xlabel('Time (s)')
                 ax.set_ylabel(ylabels[idx])
                 ax.grid(True, linestyle='--', linewidth=0.8, alpha=0.7)
         ax = self.axes[2, 0]
         ax.clear()
         ax.plot(solution_1['solution'].t, solution_1['distance'])
-        ax.set_xlabel('Время (с)')
+        ax.set_xlabel('Time (s)')
         ax.set_ylabel(ylabels[4])
+        ax.grid(True, linestyle='--', linewidth=0.8, alpha=0.7)
         self.canvas.draw()
 
 if __name__ == "__main__":
