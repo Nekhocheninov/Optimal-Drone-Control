@@ -1,7 +1,7 @@
 import sys
-from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QSlider, QVBoxLayout, QHBoxLayout, QWidget, QPushButton
+from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QSlider, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QGridLayout, QFrame
 from PySide6.QtGui import QIntValidator, QAction
-from PySide6.QtCore import Qt, QEasingCurve, QPropertyAnimation
+from PySide6.QtCore import Qt
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import model
@@ -15,7 +15,7 @@ class MainWindow(QMainWindow):
         self.setup_ui(central_widget)
 
     def setup_ui(self, central_widget):
-        hbox = QHBoxLayout(central_widget)
+        grid_layout = QGridLayout(central_widget)
         sliders_layout = QVBoxLayout()
         Labels_1 = ['Площадь крыла в метрах^2', 'Размах крыла в метрах', 'Масса самолета при пустых баках в килограммах',
                     'Масса самолета при полных баках в килограммах', 'Максимальное значение тяги двигателя в Ньютонах',
@@ -76,14 +76,14 @@ class MainWindow(QMainWindow):
             row_layout.addLayout(inner_layout)
             sliders_layout.addLayout(row_layout)
 
-        self.figures, self.axes = plt.subplots(3, 2, figsize=(10, 6), sharex=True)
+        self.figures, self.axes = plt.subplots(3, 2, figsize=(16, 6), sharex=True)
         self.figures.suptitle("Изменение параметров системы", fontsize=14)
-        self.figures.patch.set_edgecolor('black')
+        self.figures.patch.set_edgecolor('gray')
         self.figures.patch.set_linewidth(2)
         self.figures.delaxes(self.axes[2, 1])
         self.canvas = FigureCanvas(self.figures)
 
-        hbox.addWidget(self.canvas)
+        grid_layout.addWidget(self.canvas, 0, 0, 1, 1)
         
         self.update_plot()
 
@@ -95,14 +95,19 @@ class MainWindow(QMainWindow):
         sliders_container_layout = QVBoxLayout(sliders_container)
         sliders_container_layout.addWidget(label)
         sliders_container_layout.addLayout(sliders_layout)
-        sliders_container.setStyleSheet("border: 2px solid black;")
-        update_button = QPushButton("Обновить графики", central_widget)
+        sliders_container.setStyleSheet("border: 1px solid gray;")
+
+        grid_layout.addWidget(sliders_container, 0, 1, 1, 1)
+
+        update_button = QPushButton("Применить параметры", central_widget)
         update_button.clicked.connect(self.update_plot)
-        sliders_container_layout.addWidget(update_button)
+        grid_layout.addWidget(update_button, 1, 1, 1, 1)
 
-        hbox.addWidget(sliders_container)
+        description = QLabel("Параметы системы:", central_widget)
+        description.setStyleSheet("border: 1px solid gray;")
+        grid_layout.addWidget(description, 1, 0, 1, 1)
 
-        central_widget.setLayout(hbox)  # Устанавливаем макет для central_widget
+        central_widget.setLayout(grid_layout)
         self.setCentralWidget(central_widget)
 
         menubar = self.menuBar()
