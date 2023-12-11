@@ -298,13 +298,24 @@ class MainWindow(QMainWindow):
     def update_plot(self):
         Edit_values = [float(self.findChild(QLineEdit, f'horizontalEdit_{i + 1}').text()) for i in range(13)]
 
-        S, l, m_0, m_max, P_max, c, V_0, H_0, H_max, m_a, t, t_a = [float(value) for value in Edit_values[:12]]
+        S, l, m_0, m_max, P_max, c, V_0, H_0, H_max, m_a, t, t_a, H_max_a = [float(value) for value in Edit_values[:13]]
 
-        solution_1 = model.solve(t_a, S, l, m_max, m_0, m_a, c, P_max, V_0, H_0, H_max)
-        solution_2 = model.solve(t-t_a, S, l, m_max, m_0, m_a, c, P_max, V_0, H_0, H_max)
+        n_t = 250
 
-        yvalues = [solution_1['pitch'], solution_1['velocity'], solution_1['altitude'], solution_1['fuel_mass'],
-                   solution_1['distance']]
+        solution_1 = model.solve(0, t_a, n_t, S, l, m_max, m_0, m_a, c, P_max, V_0, H_0, H_max, 0.0, 0.0)
+        yvalues_1 = [solution_1['pitch'], solution_1['velocity'], solution_1['altitude'], solution_1['fuel_mass'], solution_1['distance']]
+
+        solution_2 = model.solve(t_a, t, n_t, S, l, solution_1['fuel_mass'][-1], m_0, 0, c, P_max, solution_1['velocity'][-1], solution_1['altitude'][-1], H_max_a, solution_1['pitch'][-1], solution_1['distance'][-1])
+        yvalues_2 = [solution_2['pitch'], solution_2['velocity'], solution_2['altitude'], solution_2['fuel_mass'], solution_2['distance']]
+        
+        #solution_2_a = model.solve(t_a, t, n_t, S, l, solution_1['fuel_mass'][-1], m_0, m_a, c, P_max, solution_1['velocity'][-1], solution_1['altitude'][-1], H_max_a, solution_1['pitch'][-1], solution_1['distance'][-1])
+        #yvalues_2_a = [solution_2_a['pitch'], solution_2_a['velocity'], solution_2_a['altitude'], solution_2_a['fuel_mass'], solution_2_a['distance']]
+
+        yvalues_3 = []
+        for i in range(5):
+            yvalues_3.append(model.concatenate(yvalues_1[i][:-1], yvalues_2[i]))
+        xvalues_3 = model.concatenate(solution_1['solution'].t[:-1], solution_2['solution'].t)
+        
         ylabels = ['Pitch (rad)', 'Speed (m/s)', 'Altitude (m)', 'Total Mass (kg)', 'Distance (m)']
 
         for i in range(2):
@@ -312,13 +323,17 @@ class MainWindow(QMainWindow):
                 ax = self.axes[i, j]
                 ax.clear()
                 idx = i * 2 + j
-                ax.plot(solution_1['solution'].t, yvalues[idx])
+                ax.plot(xvalues_3, yvalues_3[idx])
+                if idx == 3:
+                    ax.axhline (y = m_0, color='red', linestyle='--')
+                #ax.plot(solution_2_a['solution'].t, yvalues_2_a[idx])
                 ax.set_xlabel('Time (s)')
                 ax.set_ylabel(ylabels[idx])
                 ax.grid(True, linestyle='--', linewidth=0.8, alpha=0.7)
         ax = self.axes[2, 0]
         ax.clear()
-        ax.plot(solution_1['solution'].t, solution_1['distance'])
+        ax.plot(xvalues_3, yvalues_3[4])
+        #ax.plot(solution_2_a['solution'].t, yvalues_2_a[4])
         ax.set_xlabel('Time (s)')
         ax.set_ylabel(ylabels[4])
         ax.grid(True, linestyle='--', linewidth=0.8, alpha=0.7)

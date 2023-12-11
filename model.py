@@ -47,25 +47,28 @@ def aircraft_model(t, y, S, l, P_max, H_T, m0, ma, c):
 
     return [dm_dt, dv_dt, dh_dt, dt_dt, dx_dt]
 
-def solve(flight_time, S, l, m, m0, ma, c, P_max, V_t0, H_t0, H_T):
+def solve(t_1, t_2, n_t, S, l, m, m0, ma, c, P_max, V_t0, H_t0, H_T, theta, x):
 
     # Временные точки для решения уравнения
-    time_points = np.linspace(0, flight_time, 500)
+    time_points = np.linspace(t_1, t_2, n_t)
 
     # Начальные значения массы, скорости, высоты, тангажа и расстояния
-    initial_conditions = [m+ma, V_t0, H_t0, 0.0, 0.0]
+    initial_conditions = [m+ma, V_t0, H_t0, theta, x]
 
     # Решение системы уравнений
     solution = solve_ivp(
         lambda t, y: aircraft_model(t, y, S, l, P_max, H_T, m0, ma, c),
-        y0=initial_conditions,
-        t_eval=time_points,
-        t_span=(time_points[0], time_points[-1]),
+        y0 = initial_conditions,
+        t_eval = time_points,
+        t_span = (time_points[0], time_points[-1]),
         method='RK45',
-        atol=1e-8,
-        rtol=1e-8,
-        dense_output=True
+        atol = 1e-8,
+        rtol = 1e-8,
+        dense_output = True
     )
     # Извлечение решений
     fuel_mass, velocity, altitude, pitch, distance  = solution.y[0], solution.y[1], solution.y[2], solution.y[3], solution.y[4]
     return {'solution':solution, 'fuel_mass':fuel_mass, 'velocity':velocity, 'altitude':altitude, 'pitch':pitch, 'distance':distance}
+
+def concatenate(a, b):
+    return np.concatenate((a, b))
