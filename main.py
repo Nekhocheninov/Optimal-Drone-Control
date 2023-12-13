@@ -81,7 +81,7 @@ class MainWindow(QMainWindow):
                         'Flight Duration in Seconds', 'Time of Cargo Release', 'Final Altitude after Cargo Release in Meters']
 
         Labels_2 = ['S', 'l', 'm_0', 'm_max', 'P_max', 'c', 'V_0', 'H_0', 'H_max', 'm_a', 't', 't_a', 'H_max_a']
-        Variables = ['0.55', '2.8956', '6.5', '11.5', '30', '0.0045', '15', '10', '500', '2.0', '1800', '900', '1000']
+        Variables = ['0.55', '2.8956', '8.5', '13.5', '70', '0.0045', '20', '10', '500', '2.0', '1800', '900', '1000']
 
         toolTips = ['Площадь крыла влияет на подъемную силу и маневренность. Большая площадь обеспечивает высокую грузоподъемность, маленькая - повышает маневренность, но уменьшает грузоподъемность и продолжительность полета.',
                     'Размах крыла влияет на подъемную силу и маневренность. Больший размах способствует грузоподъемности, меньший — повышает маневренность и скорость.',
@@ -137,8 +137,7 @@ class MainWindow(QMainWindow):
                 slider.setValue(float(Variables[i]))
                 slider.valueChanged[int].connect(lambda value, e=edit: e.setText(str(value)))
 
-            initial_value = Variables[i]
-            edit.setText(str(initial_value))
+            edit.setText(str(Variables[i]))
 
             edit.setToolTip(f"{toolTips[i]}")
             slider.setToolTip(f"{toolTips[i]}")
@@ -207,22 +206,26 @@ class MainWindow(QMainWindow):
         if (action.text() == 'Выход') | (action.text() == 'Exit'):
             QApplication.quit()
         elif (action.text() == 'Открыть') | (action.text() == 'Open'):
-            pass
+            Variables = ['0.0', '0.0', '0.0', '0.0', '0', '0.0', '0', '0', '0', '0.0', '0', '0', '0']
+            self.update_edit(Variables)
         elif (action.text() == 'Пример 1') | (action.text() == 'Example 1'):
-            pass
+            Variables = ['0.55', '2.8956', '8.5', '13.5', '70', '0.0045', '20', '10', '500', '2.0', '1800', '900', '1000']
+            self.update_edit(Variables)
         elif (action.text() == 'Пример 2') | (action.text() == 'Example 2'):
-            pass
+            Variables = ['0.55', '2.8956', '8.5', '13.5', '70', '0.0045', '20', '10', '500', '2.0', '1800', '900', '1000']
+            self.update_edit(Variables)
         elif (action.text() == 'Упражнение 1') | (action.text() == 'Exercise 1'):
-            pass
+            Variables = ['0.55', '2.8956', '8.5', '13.5', '70', '0.0045', '20', '10', '500', '2.0', '1800', '900', '1000']
+            self.update_edit(Variables)
         elif (action.text() == 'Упражнение 2') | (action.text() == 'Exercise 2'):
-            pass
+            Variables = ['0.55', '2.8956', '8.5', '13.5', '70', '0.0045', '20', '10', '500', '2.0', '1800', '900', '1000']
+            self.update_edit(Variables)
         elif (action.text() == 'Русский') | (action.text() == 'Russian'):
             if self.current_language != 'ru':
                 self.setWindowTitle("Оптимальное управление беспилотным летательным аппаратом для доставки грузов")
                 self.current_language = 'ru'
                 self.changeMenu()
                 self.changeLabelsLanguage()
-            
         elif (action.text() == 'Английский') | (action.text() == 'English'):
             if self.current_language != 'en':
                 self.setWindowTitle("Optimal control of an unmanned aerial vehicle for cargo delivery")
@@ -305,7 +308,7 @@ class MainWindow(QMainWindow):
         solution_1 = model.solve(0, t_a, n_t, S, l, m_max, m_0, m_a, c, P_max, V_0, H_0, H_max, 0.0, 0.0)
         yvalues_1 = [solution_1['pitch'], solution_1['velocity'], solution_1['altitude'], solution_1['fuel_mass'], solution_1['distance']]
 
-        solution_2 = model.solve(t_a, t, n_t, S, l, solution_1['fuel_mass'][-1], m_0, 0, c, P_max, solution_1['velocity'][-1], solution_1['altitude'][-1], H_max_a, solution_1['pitch'][-1], solution_1['distance'][-1])
+        solution_2 = model.solve(t_a, t, n_t, S, l, solution_1['fuel_mass'][-1] - m_a, m_0, 0, c, P_max, solution_1['velocity'][-1], solution_1['altitude'][-1], H_max_a, solution_1['pitch'][-1], solution_1['distance'][-1])
         yvalues_2 = [solution_2['pitch'], solution_2['velocity'], solution_2['altitude'], solution_2['fuel_mass'], solution_2['distance']]
         
         #solution_2_a = model.solve(t_a, t, n_t, S, l, solution_1['fuel_mass'][-1], m_0, m_a, c, P_max, solution_1['velocity'][-1], solution_1['altitude'][-1], H_max_a, solution_1['pitch'][-1], solution_1['distance'][-1])
@@ -338,6 +341,20 @@ class MainWindow(QMainWindow):
         ax.set_ylabel(ylabels[4])
         ax.grid(True, linestyle='--', linewidth=0.8, alpha=0.7)
         self.canvas.draw()
+    
+    def update_edit(self, Variables):
+        for i in range(13):
+            slider = self.findChild(QSlider, f'horizontalSlider_{i + 1}')
+            edit = self.findChild(QLineEdit, f'horizontalEdit_{i + 1}')
+            if i in [0, 1]:
+                slider.setValue(float(Variables[i]) * 2)
+            elif i in [2, 3, 4, 6, 9]:
+                slider.setValue(float(Variables[i]) * 2)
+            elif i == 5:
+                slider.setValue(float(Variables[i]) * 8000)
+            elif i in [7, 8, 10, 11, 12]:
+                slider.setValue(float(Variables[i]))
+            edit.setText(str(Variables[i]))
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

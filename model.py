@@ -12,7 +12,8 @@ def air_density(height):
     # Рассчет давления    на заданной высоте
     # Рассчет плотности по уравнению состояния газа
     T = T0 - L * height
-    P = P0 * (1 - L * height / T0) ** (9.8 * M / (R * L))
+    a = (1 - L * height / T0)
+    P = P0 * np.sign(a) * (np.abs(a)) ** (9.8 * M / (R * L))
     rho = P / (R * T)
     return rho
 
