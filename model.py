@@ -23,6 +23,7 @@ def func(height, velocity, S):
 # Система уравнений
 def aircraft_model(t, y, S, l, P_max, H_T, m0, ma, c):
     m, v, h, theta, x = y
+    global op
 
     g     = 9.80665 # ускорение свободного падения
     e     = 0.75    # коэффициент Освальда
@@ -55,7 +56,6 @@ def solve(t_1, t_2, n_t, S, l, m, m0, ma, c, P_max, V_t0, H_t0, H_T, theta, x):
 
     # Начальные значения массы, скорости, высоты, тангажа и расстояния
     initial_conditions = [m+ma, V_t0, H_t0, theta, x]
-
     # Решение системы уравнений
     solution = solve_ivp(
         lambda t, y: aircraft_model(t, y, S, l, P_max, H_T, m0, ma, c),

@@ -54,6 +54,7 @@ class MainWindow(QMainWindow):
         exercises_menu = menubar.addMenu('Упражнения')
         language_menu = menubar.addMenu('Язык')
         file_menu.addAction('Открыть')
+        file_menu.addAction('Математическое описание')
         file_menu.addAction('Выход')
         examples_menu.addAction('Пример 1')
         examples_menu.addAction('Пример 2')
@@ -81,7 +82,7 @@ class MainWindow(QMainWindow):
                         'Flight Duration in Seconds', 'Time of Cargo Release', 'Final Altitude after Cargo Release in Meters']
 
         Labels_2 = ['S', 'l', 'm_0', 'm_max', 'P_max', 'c', 'V_0', 'H_0', 'H_max', 'm_a', 't', 't_a', 'H_max_a']
-        Variables = ['0.55', '2.8956', '8.5', '13.5', '70', '0.0045', '20', '10', '500', '2.0', '1800', '900', '1000']
+        Variables = ['0.55', '2.8956', '8.5', '13.5', '20', '0.0045', '20', '10', '500', '2.0', '1300', '500', '800']
 
         toolTips = ['Площадь крыла влияет на подъемную силу и маневренность. Большая площадь обеспечивает высокую грузоподъемность, маленькая - повышает маневренность, но уменьшает грузоподъемность и продолжительность полета.',
                     'Размах крыла влияет на подъемную силу и маневренность. Больший размах способствует грузоподъемности, меньший — повышает маневренность и скорость.',
@@ -155,18 +156,18 @@ class MainWindow(QMainWindow):
             row_layout.addLayout(inner_layout)
             sliders_layout.addLayout(row_layout)
 
-        self.figures, self.axes = plt.subplots(3, 2, figsize=(16, 6), sharex=True)
-        self.figures.suptitle("Changing system parameters", fontsize=14)
+        self.figures, self.axes = plt.subplots(1, 1, figsize=(16, 6), sharex=True)
+        self.figures.suptitle("Дальность полета", fontsize=14)
         self.figures.patch.set_edgecolor('gray')
         self.figures.patch.set_linewidth(2)
-        self.figures.delaxes(self.axes[2, 1])
+        #self.figures.delaxes(self.axes[2, 1])
         self.canvas = FigureCanvas(self.figures)
 
         grid_layout.addWidget(self.canvas, 0, 0, 1, 1)
         
         self.update_plot()
 
-        label = QLabel("Параметы системы:", central_widget)
+        label = QLabel("Параметры системы:", central_widget)
         label.setObjectName(f'label')
         label.setAlignment(Qt.AlignCenter)
         label.setStyleSheet("border: 0px solid black;")
@@ -184,7 +185,9 @@ class MainWindow(QMainWindow):
         update_button.clicked.connect(self.update_plot)
         grid_layout.addWidget(update_button, 1, 1, 1, 1)
 
-        description = QLabel("Параметы системы:", central_widget)
+        description = QLabel("Данная математическая модель отображает дальность полета беспилотного летательного аппарата для доставки грузов при различных начальных значениях параметров полета.\nЗеленый пунктир отображает момент времени, когда беспилотник достиг заданной высоты полета; оранжевый пунктир отображает момент времени, когда груз был сброшен; красный пунктир отображает момент времени, когда у беспилотника кончилось топливо.", central_widget)
+        description.setWordWrap(True)
+        description.setObjectName(f'description')
         description.setStyleSheet("border: 1px solid gray;")
         grid_layout.addWidget(description, 1, 0, 1, 1)
 
@@ -206,28 +209,65 @@ class MainWindow(QMainWindow):
         if (action.text() == 'Выход') | (action.text() == 'Exit'):
             QApplication.quit()
         elif (action.text() == 'Открыть') | (action.text() == 'Open'):
-            Variables = ['0.0', '0.0', '0.0', '0.0', '0', '0.0', '0', '0', '0', '0.0', '0', '0', '0']
+            Variables = ['0.55', '2.8956', '8.5', '13.5', '20', '0.0045', '20', '10', '500', '2.0', '1300', '500', '800']
+            ax = self.axes
+            ax.clear()
+            self.canvas.draw()
+            label = self.findChild(QLabel, f'description')
+            if self.current_language == 'ru':
+                label.setText('Данная математическая модель отображает дальность полета беспилотного летательного аппарата для доставки грузов при различных начальных значениях параметров полета.\nЗеленый пунктир отображает момент времени, когда беспилотник достиг заданной высоты полета; оранжевый пунктир отображает момент времени, когда груз был сброшен; красный пунктир отображает момент времени, когда у беспилотника кончилось топливо.')
+            else:
+                label.setText('This mathematical model displays the flight range of an unmanned aerial vehicle for delivering goods at various initial values ​​of flight parameters.\nThe green dotted line displays the moment in time when the drone reached a given flight altitude; the orange dotted line represents the point in time when the load was dropped; The red dotted line represents the point in time when the drone ran out of fuel.')
             self.update_edit(Variables)
         elif (action.text() == 'Пример 1') | (action.text() == 'Example 1'):
             Variables = ['0.55', '2.8956', '8.5', '13.5', '70', '0.0045', '20', '10', '500', '2.0', '1800', '900', '1000']
+            ax = self.axes
+            ax.clear()
+            self.canvas.draw()
+            label = self.findChild(QLabel, f'description')
+            if self.current_language == 'ru':
+                label.setText('Данный пример основан на технических характеристиках Aerosonde.')
+            else:
+                label.setText('This example is based on Aerosonde specifications.')
             self.update_edit(Variables)
         elif (action.text() == 'Пример 2') | (action.text() == 'Example 2'):
             Variables = ['0.55', '2.8956', '8.5', '13.5', '70', '0.0045', '20', '10', '500', '2.0', '1800', '900', '1000']
+            ax = self.axes
+            ax.clear()
+            self.canvas.draw()
             self.update_edit(Variables)
         elif (action.text() == 'Упражнение 1') | (action.text() == 'Exercise 1'):
-            Variables = ['0.55', '2.8956', '8.5', '13.5', '70', '0.0045', '20', '10', '500', '2.0', '1800', '900', '1000']
-            self.update_edit(Variables)
+            Variables = ['0.55', '2.8956', '8.5', '13.5', '20', '0.0045', '20', '10', '500', '2.0', '1800', '900', '1000']
+            ax = self.axes
+            ax.clear()
+            self.canvas.draw()
+            label = self.findChild(QLabel, f'description')
+            if self.current_language == 'ru':
+                label.setText('Изменяя параметры крыла беспилотника необходимо достичь дальность полета выше 60,000.')
+            else:
+                label.setText("By changing the parameters of the drone's wing, it is necessary to achieve a flight range above 60,000.")
+            for i in range(11):
+                slider = self.findChild(QSlider, f'horizontalSlider_{i + 3}')
+                edit = self.findChild(QLineEdit, f'horizontalEdit_{i + 3}')
+                edit.setDisabled(True)
+                slider.setDisabled(True)
+                self.update_edit(Variables)
         elif (action.text() == 'Упражнение 2') | (action.text() == 'Exercise 2'):
             Variables = ['0.55', '2.8956', '8.5', '13.5', '70', '0.0045', '20', '10', '500', '2.0', '1800', '900', '1000']
+            ax = self.axes
+            ax.clear()
+            self.canvas.draw()
             self.update_edit(Variables)
         elif (action.text() == 'Русский') | (action.text() == 'Russian'):
             if self.current_language != 'ru':
+                self.figures.suptitle("Дальность полета", fontsize=14)
                 self.setWindowTitle("Оптимальное управление беспилотным летательным аппаратом для доставки грузов")
                 self.current_language = 'ru'
                 self.changeMenu()
                 self.changeLabelsLanguage()
         elif (action.text() == 'Английский') | (action.text() == 'English'):
             if self.current_language != 'en':
+                self.figures.suptitle("Range of flight", fontsize=14)
                 self.setWindowTitle("Optimal control of an unmanned aerial vehicle for cargo delivery")
                 self.current_language = 'en'
                 self.changeMenu()
@@ -264,6 +304,7 @@ class MainWindow(QMainWindow):
                         'Момент времени, когда дрон должен сбросить груз',
                         'Новое значение высоты, которую дрон не будет превышать']
             update_lang = ['Параметы системы:', 'Применить параметры']
+            label_description = ['Данная математическая модель отображает дальность полета беспилотного летательного аппарата для доставки грузов при различных начальных значениях параметров полета.\nЗеленый пунктир отображает момент времени, когда беспилотник достиг заданной высоты полета; оранжевый пунктир отображает момент времени, когда груз был сброшен; красный пунктир отображает момент времени, когда у беспилотника кончилось топливо.']
         else:
             Labels_1 = ['Wing Area in Square Meters', 'Wingspan in Meters', 'Drone Mass with Empty Tanks in Kilograms',
                         'Drone Mass with Full Tanks in Kilograms', 'Maximum Engine Thrust in Newtons',
@@ -284,7 +325,7 @@ class MainWindow(QMainWindow):
                         'The time when the drone should release the cargo',
                         'The new value of the height that the drone will not exceed']
             update_lang = ['System parameters:', 'Apply parameters']
-
+            label_description = ['This mathematical model displays the flight range of an unmanned aerial vehicle for delivering goods at various initial values ​​of flight parameters.\nThe green dotted line displays the moment in time when the drone reached a given flight altitude; the orange dotted line represents the point in time when the load was dropped; The red dotted line represents the point in time when the drone ran out of fuel.']
         for i in range(13):
             label_1 = self.findChild(QLabel, f'label_1_{i + 1}')
             label_1.setText(Labels_1[i] + ':')
@@ -303,7 +344,7 @@ class MainWindow(QMainWindow):
 
         S, l, m_0, m_max, P_max, c, V_0, H_0, H_max, m_a, t, t_a, H_max_a = [float(value) for value in Edit_values[:13]]
 
-        n_t = 250
+        n_t = 100
 
         solution_1 = model.solve(0, t_a, n_t, S, l, m_max, m_0, m_a, c, P_max, V_0, H_0, H_max, 0.0, 0.0)
         yvalues_1 = [solution_1['pitch'], solution_1['velocity'], solution_1['altitude'], solution_1['fuel_mass'], solution_1['distance']]
@@ -320,7 +361,7 @@ class MainWindow(QMainWindow):
         xvalues_3 = model.concatenate(solution_1['solution'].t[:-1], solution_2['solution'].t)
         
         ylabels = ['Pitch (rad)', 'Speed (m/s)', 'Altitude (m)', 'Total Mass (kg)', 'Distance (m)']
-
+        '''
         for i in range(2):
             for j in range(2):
                 ax = self.axes[i, j]
@@ -333,15 +374,39 @@ class MainWindow(QMainWindow):
                 ax.set_xlabel('Time (s)')
                 ax.set_ylabel(ylabels[idx])
                 ax.grid(True, linestyle='--', linewidth=0.8, alpha=0.7)
-        ax = self.axes[2, 0]
+        '''
+        print()
+        f_0 = self.find_first_1(yvalues_3[3], m_0)
+        h_1 = self.find_first_2(yvalues_1[2], H_max)
+        h_2 = self.find_first_2(yvalues_2[2], H_max_a)
+        ax = self.axes #ax = self.axes[2, 0]
         ax.clear()
         ax.plot(xvalues_3, yvalues_3[4])
+        if f_0[0]:
+            ax.axvline(x = xvalues_3[f_0[0]], color='red', linestyle='--')
+        if h_1[0]:
+            ax.axvline(x = xvalues_3[h_1[0]], color='g', linestyle='--')
+        ax.axvline(x = t_a, color='orange', linestyle='--')
+        if h_2[0]:
+            ax.axvline(x = xvalues_3[len(yvalues_1[2])+h_2[0]], color='g', linestyle='--')
         #ax.plot(solution_2_a['solution'].t, yvalues_2_a[4])
         ax.set_xlabel('Time (s)')
         ax.set_ylabel(ylabels[4])
         ax.grid(True, linestyle='--', linewidth=0.8, alpha=0.7)
         self.canvas.draw()
     
+    def find_first_1(self, arr, target):
+        for index, element in enumerate(arr):
+            if element < target:
+                return index, element
+        return None, None 
+    
+    def find_first_2(self, arr, target):
+        for index, element in enumerate(arr):
+            if element > target:
+                return index, element
+        return None, None 
+
     def update_edit(self, Variables):
         for i in range(13):
             slider = self.findChild(QSlider, f'horizontalSlider_{i + 1}')
