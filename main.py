@@ -1,10 +1,33 @@
 import sys
 from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QSlider, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QGridLayout
-from PySide6.QtGui import QIntValidator, QAction
+from PySide6.QtGui import QIntValidator, QAction, QPixmap
 from PySide6.QtCore import Qt, QEvent
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import model
+
+class InfoWindow(QWidget):
+    def __init__(self):
+        super().__init__()
+
+        self.setWindowTitle("Математическая постановка задачи")
+
+        self.info_label_1 = QLabel("Движение летательного аппарата описывается системой дифференциальных уравнений:", self)
+        self.info_label_2 = QLabel("где V– скорость; H – высота; t – время; α – угол атаки; ϑ – угол тангажа; θ – траекторный угол; cy0 – коэффициент подъемной силы при ϑ = 0; cx0 – коэффициент производной первого порядка по углу атаки; cyα – коэффициент минимального лобового сопротивления; P – тяга двигателя; mсек– секундный расход топлива при максимальной тяге; ρ(ℎ) – плотность воздуха; S – площадь крыла; l – размах крыла; e – коэффициент Освальда.\nПри достижении заданной высоты полета беспилотный летательный аппарат движется должен двигаться с неизменным траекторным углом, т.е. H = const, θ = 0.", self)
+        self.info_label_1.setWordWrap(True)
+        self.info_label_2.setWordWrap(True)
+
+        pixmap = QPixmap("model.png")
+        self.image_label = QLabel(self)
+        self.image_label.setPixmap(pixmap)
+        self.image_label.setAlignment(Qt.AlignCenter)
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.info_label_1)
+        layout.addWidget(self.image_label)
+        layout.addWidget(self.info_label_2)
+
+        self.setLayout(layout)
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -13,29 +36,24 @@ class MainWindow(QMainWindow):
         self.menu_labels = {
             'Выход': 'Exit',
             'Открыть': 'Open',
-            'Пример 1': 'Example 1',
-            'Пример 2': 'Example 2',
-            'Упражнение 1': 'Exercise 1',
-            'Упражнение 2': 'Exercise 2',
+            'Математическое описание': 'Mathematical description',
             'Русский': 'Russian',
             'Английский': 'English',
             'Программа' : 'Program',
-            'Примеры' : 'Examples',
-            'Упражнения' : 'Exercises',
+            'Пример' : 'Example',
+            'Упражнение' : 'Exercise',
             'Язык' : 'Language',
             'Exit': 'Выход',
             'Open': 'Открыть',
-            'Example 1': 'Пример 1',
-            'Example 2': 'Пример 2',
-            'Exercise 1': 'Упражнение 1',
-            'Exercise 2': 'Упражнение 2',
+            'Mathematical description': 'Математическое описание',
             'Russian': 'Русский',
             'English': 'Английский',
             'Program' : 'Программа',
-            'Examples' : 'Примеры',
-            'Exercises' : 'Упражнения',
+            'Example' : 'Пример',
+            'Exercise' : 'Упражнение',
             'Language' : 'Язык'
         }
+        self.current_menu = 0
         self.current_language = 'ru'
 
         central_widget = QWidget(self)
@@ -43,6 +61,7 @@ class MainWindow(QMainWindow):
         self.statusBar().addWidget(self.status_label, 1)
         self.setCentralWidget(central_widget)
         self.setup_ui(central_widget)
+        self.info_window = InfoWindow()
 
     def setup_ui(self, central_widget):
         grid_layout = QGridLayout(central_widget)
@@ -50,22 +69,17 @@ class MainWindow(QMainWindow):
 
         menubar = self.menuBar()
         file_menu = menubar.addMenu('Программа')
-        examples_menu = menubar.addMenu('Примеры')
-        exercises_menu = menubar.addMenu('Упражнения')
+        menubar.addAction('Пример')
+        menubar.addAction('Упражнение')
         language_menu = menubar.addMenu('Язык')
         file_menu.addAction('Открыть')
         file_menu.addAction('Математическое описание')
         file_menu.addAction('Выход')
-        examples_menu.addAction('Пример 1')
-        examples_menu.addAction('Пример 2')
-        exercises_menu.addAction('Упражнение 1')
-        exercises_menu.addAction('Упражнение 2')
         language_menu.addAction('Русский')
         language_menu.addAction('Английский')
 
+        menubar.triggered[QAction].connect(self.menu_triggered)
         file_menu.triggered[QAction].connect(self.menu_triggered)
-        examples_menu.triggered[QAction].connect(self.menu_triggered)
-        exercises_menu.triggered[QAction].connect(self.menu_triggered)
         language_menu.triggered[QAction].connect(self.menu_triggered)
 
         if self.current_language == 'ru':
@@ -185,7 +199,7 @@ class MainWindow(QMainWindow):
         update_button.clicked.connect(self.update_plot)
         grid_layout.addWidget(update_button, 1, 1, 1, 1)
 
-        description = QLabel("Данная математическая модель отображает дальность полета беспилотного летательного аппарата для доставки грузов при различных начальных значениях параметров полета.\nЗеленый пунктир отображает момент времени, когда беспилотник достиг заданной высоты полета; оранжевый пунктир отображает момент времени, когда груз был сброшен; красный пунктир отображает момент времени, когда у беспилотника кончилось топливо.", central_widget)
+        description = QLabel("Данная математическая модель отображает дальность полета беспилотного летательного аппарата для доставки грузов при различных начальных значениях параметров полета.\nЗеленый пунктир отображает момент времени, когда беспилотник достиг заданной высоты полета; оранжевый пунктир отображает момент времени, когда груз был сброшен; красный пунктир отображает момент времени, когда у беспилотника кончилось топливо.\nНажмите на кнопку справа, чтобы обновить график.", central_widget)
         description.setWordWrap(True)
         description.setObjectName(f'description')
         description.setStyleSheet("border: 1px solid gray;")
@@ -208,56 +222,49 @@ class MainWindow(QMainWindow):
     def menu_triggered(self, action):
         if (action.text() == 'Выход') | (action.text() == 'Exit'):
             QApplication.quit()
+        elif (action.text() == 'Математическое описание') | (action.text() == 'Mathematical description'):
+            self.info_window.show()
         elif (action.text() == 'Открыть') | (action.text() == 'Open'):
             Variables = ['0.55', '2.8956', '8.5', '13.5', '20', '0.0045', '20', '10', '500', '2.0', '1300', '500', '800']
             ax = self.axes
             ax.clear()
             self.canvas.draw()
+            self.current_menu = 0
             label = self.findChild(QLabel, f'description')
             if self.current_language == 'ru':
                 label.setText('Данная математическая модель отображает дальность полета беспилотного летательного аппарата для доставки грузов при различных начальных значениях параметров полета.\nЗеленый пунктир отображает момент времени, когда беспилотник достиг заданной высоты полета; оранжевый пунктир отображает момент времени, когда груз был сброшен; красный пунктир отображает момент времени, когда у беспилотника кончилось топливо.')
             else:
                 label.setText('This mathematical model displays the flight range of an unmanned aerial vehicle for delivering goods at various initial values ​​of flight parameters.\nThe green dotted line displays the moment in time when the drone reached a given flight altitude; the orange dotted line represents the point in time when the load was dropped; The red dotted line represents the point in time when the drone ran out of fuel.')
             self.update_edit(Variables)
-        elif (action.text() == 'Пример 1') | (action.text() == 'Example 1'):
+        elif (action.text() == 'Пример') | (action.text() == 'Example'):
             Variables = ['0.55', '2.8956', '8.5', '13.5', '70', '0.0045', '20', '10', '500', '2.0', '1800', '900', '1000']
             ax = self.axes
             ax.clear()
             self.canvas.draw()
+            self.current_menu = 1
             label = self.findChild(QLabel, f'description')
             if self.current_language == 'ru':
-                label.setText('Данный пример основан на технических характеристиках Aerosonde.')
+                label.setText('Данный пример основан на технических характеристиках Aerosonde.\nНажмите на кнопку справа, чтобы обновить график.')
             else:
-                label.setText('This example is based on Aerosonde specifications.')
+                label.setText('This example is based on Aerosonde specifications.\nClick the button on the right to update the graph.')
             self.update_edit(Variables)
-        elif (action.text() == 'Пример 2') | (action.text() == 'Example 2'):
-            Variables = ['0.55', '2.8956', '8.5', '13.5', '70', '0.0045', '20', '10', '500', '2.0', '1800', '900', '1000']
-            ax = self.axes
-            ax.clear()
-            self.canvas.draw()
-            self.update_edit(Variables)
-        elif (action.text() == 'Упражнение 1') | (action.text() == 'Exercise 1'):
+        elif (action.text() == 'Упражнение') | (action.text() == 'Exercise'):
             Variables = ['0.55', '2.8956', '8.5', '13.5', '20', '0.0045', '20', '10', '500', '2.0', '1800', '900', '1000']
             ax = self.axes
             ax.clear()
             self.canvas.draw()
+            self.current_menu = 2
             label = self.findChild(QLabel, f'description')
             if self.current_language == 'ru':
-                label.setText('Изменяя параметры крыла беспилотника необходимо достичь дальность полета выше 60,000.')
+                label.setText('Изменяя параметры крыла беспилотника необходимо достичь дальность полета выше 60,000.\nНажмите на кнопку справа, чтобы обновить график.')
             else:
-                label.setText("By changing the parameters of the drone's wing, it is necessary to achieve a flight range above 60,000.")
+                label.setText("By changing the parameters of the drone's wing, it is necessary to achieve a flight range above 60,000.\nClick the button on the right to update the graph.")
             for i in range(11):
                 slider = self.findChild(QSlider, f'horizontalSlider_{i + 3}')
                 edit = self.findChild(QLineEdit, f'horizontalEdit_{i + 3}')
                 edit.setDisabled(True)
                 slider.setDisabled(True)
                 self.update_edit(Variables)
-        elif (action.text() == 'Упражнение 2') | (action.text() == 'Exercise 2'):
-            Variables = ['0.55', '2.8956', '8.5', '13.5', '70', '0.0045', '20', '10', '500', '2.0', '1800', '900', '1000']
-            ax = self.axes
-            ax.clear()
-            self.canvas.draw()
-            self.update_edit(Variables)
         elif (action.text() == 'Русский') | (action.text() == 'Russian'):
             if self.current_language != 'ru':
                 self.figures.suptitle("Дальность полета", fontsize=14)
@@ -272,13 +279,21 @@ class MainWindow(QMainWindow):
                 self.current_language = 'en'
                 self.changeMenu()
                 self.changeLabelsLanguage()
+        if self.current_menu != 2:
+            for i in range(11):
+                slider = self.findChild(QSlider, f'horizontalSlider_{i + 3}')
+                edit = self.findChild(QLineEdit, f'horizontalEdit_{i + 3}')
+                edit.setDisabled(False)
+                slider.setDisabled(False)
     
     def changeMenu(self):
         for menu in self.menuBar().actions():
-            for action in menu.menu().actions():
-                action_name = action.text()
-                new_text = self.menu_labels.get(action_name, action_name)
-                action.setText(new_text)
+            sub_menu = menu.menu()
+            if sub_menu:
+                for action in sub_menu.actions():
+                    action_name = action.text()
+                    new_text = self.menu_labels.get(action_name, action_name)
+                    action.setText(new_text)
             menu_name = menu.text()
             new_text = self.menu_labels.get(menu_name, menu_name)
             menu.setText(new_text)
@@ -304,7 +319,9 @@ class MainWindow(QMainWindow):
                         'Момент времени, когда дрон должен сбросить груз',
                         'Новое значение высоты, которую дрон не будет превышать']
             update_lang = ['Параметы системы:', 'Применить параметры']
-            label_description = ['Данная математическая модель отображает дальность полета беспилотного летательного аппарата для доставки грузов при различных начальных значениях параметров полета.\nЗеленый пунктир отображает момент времени, когда беспилотник достиг заданной высоты полета; оранжевый пунктир отображает момент времени, когда груз был сброшен; красный пунктир отображает момент времени, когда у беспилотника кончилось топливо.']
+            label_description = ['Данная математическая модель отображает дальность полета беспилотного летательного аппарата для доставки грузов при различных начальных значениях параметров полета.\nЗеленый пунктир отображает момент времени, когда беспилотник достиг заданной высоты полета; оранжевый пунктир отображает момент времени, когда груз был сброшен; красный пунктир отображает момент времени, когда у беспилотника кончилось топливо.\nНажмите на кнопку справа, чтобы обновить график.',
+                                 'Данный пример основан на технических характеристиках Aerosonde.\nНажмите на кнопку справа, чтобы обновить график.',
+                                 'Изменяя параметры крыла беспилотника необходимо достичь дальность полета выше 60,000.\nНажмите на кнопку справа, чтобы обновить график.']
         else:
             Labels_1 = ['Wing Area in Square Meters', 'Wingspan in Meters', 'Drone Mass with Empty Tanks in Kilograms',
                         'Drone Mass with Full Tanks in Kilograms', 'Maximum Engine Thrust in Newtons',
@@ -325,7 +342,9 @@ class MainWindow(QMainWindow):
                         'The time when the drone should release the cargo',
                         'The new value of the height that the drone will not exceed']
             update_lang = ['System parameters:', 'Apply parameters']
-            label_description = ['This mathematical model displays the flight range of an unmanned aerial vehicle for delivering goods at various initial values ​​of flight parameters.\nThe green dotted line displays the moment in time when the drone reached a given flight altitude; the orange dotted line represents the point in time when the load was dropped; The red dotted line represents the point in time when the drone ran out of fuel.']
+            label_description = ['This mathematical model displays the flight range of an unmanned aerial vehicle for delivering goods at various initial values ​​of flight parameters.\nThe green dotted line displays the moment in time when the drone reached a given flight altitude; the orange dotted line represents the point in time when the load was dropped; The red dotted line represents the point in time when the drone ran out of fuel.\nClick the button on the right to update the graph.',
+                                 'This example is based on Aerosonde specifications.\nClick the button on the right to update the graph.',
+                                 "By changing the parameters of the drone's wing, it is necessary to achieve a flight range above 60,000.\nClick the button on the right to update the graph."]
         for i in range(13):
             label_1 = self.findChild(QLabel, f'label_1_{i + 1}')
             label_1.setText(Labels_1[i] + ':')
@@ -333,7 +352,13 @@ class MainWindow(QMainWindow):
             edit = self.findChild(QLineEdit, f'horizontalEdit_{i + 1}')
             edit.setToolTip(f"{toolTips[i]}")
             slider.setToolTip(f"{toolTips[i]}")
-        
+        label_d = self.findChild(QLabel, f'description')
+        if self.current_menu == 0:
+            label_d.setText(label_description[0])
+        elif self.current_menu == 1:
+            label_d.setText(label_description[1])
+        else:
+            label_d.setText(label_description[2])
         label = self.findChild(QLabel, f'label')
         update_button = self.findChild(QPushButton, f'update_button')
         label.setText(update_lang[0])
@@ -393,6 +418,13 @@ class MainWindow(QMainWindow):
         ax.set_xlabel('Time (s)')
         ax.set_ylabel(ylabels[4])
         ax.grid(True, linestyle='--', linewidth=0.8, alpha=0.7)
+        if self.current_menu == 2:
+            if yvalues_3[4][-1] > 60000:
+                label = self.findChild(QLabel, f'description')
+                if self.current_language == 'ru':
+                    label.setText('Поздравляем, вы сделали это!')
+                else:
+                    label.setText("Congratulations, you've done it!")
         self.canvas.draw()
     
     def find_first_1(self, arr, target):
